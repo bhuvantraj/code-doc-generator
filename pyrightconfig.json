@@ -1,0 +1,12 @@
+{
+    "include": ["."],
+    "extraPaths": ["."],
+    "executionEnvironments": [
+        {
+            "root": ".",
+            "extraPaths": ["."]
+        }
+    ],
+    "reportMissingImports": "warning",
+    "pythonVersion": "3.13"
+}

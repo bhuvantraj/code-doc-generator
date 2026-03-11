@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "name": "simple_function",
+    "language": "python",
+    "code": "def add(a, b):\n    \"\"\"Adds two numbers.\"\"\"\n    return a + b\n",
+    "expected_keys": ["functions"]
+  },
+  {
+    "id": 2,
+    "name": "multiple_functions",
+    "language": "python",
+    "code": "def add(a, b):\n    return a + b\n\ndef subtract(a, b):\n    return a - b\n\ndef multiply(a, b):\n    return a * b\n",
+    "expected_keys": ["functions"]
+  },
+  {
+    "id": 3,
+    "name": "class_with_methods",
+    "language": "python",
+    "code": "class Calculator:\n    \"\"\"A simple calculator class.\"\"\"\n\n    def add(self, a, b):\n        return a + b\n\n    def subtract(self, a, b):\n        return a - b\n",
+    "expected_keys": ["classes"]
+  },
+  {
+    "id": 4,
+    "name": "comments_and_docstrings",
+    "language": "python",
+    "code": "# This is a utility module\n\ndef greet(name):\n    \"\"\"Greet someone by name.\"\"\"\n    # Build greeting\n    return f\"Hello, {name}!\"\n",
+    "expected_keys": ["functions"]
+  },
+  {
+    "id": 5,
+    "name": "empty_file",
+    "language": "python",
+    "code": "",
+    "expected_keys": []
+  },
+  {
+    "id": 6,
+    "name": "syntax_error",
+    "language": "python",
+    "code": "def broken(\n    return 42\n",
+    "expected_keys": ["has_errors"]
+  },
+  {
+    "id": 7,
+    "name": "large_file",
+    "language": "python",
+    "code": "def func_0(x):\n    return x * 0\n\ndef func_1(x):\n    return x * 1\n\ndef func_2(x):\n    return x * 2\n\ndef func_3(x):\n    return x * 3\n\ndef func_4(x):\n    return x * 4\n\ndef func_5(x):\n    return x * 5\n\ndef func_6(x):\n    return x * 6\n\ndef func_7(x):\n    return x * 7\n\ndef func_8(x):\n    return x * 8\n\ndef func_9(x):\n    return x * 9\n",
+    "expected_keys": ["functions"]
+  },
+  {
+    "id": 8,
+    "name": "nested_functions",
+    "language": "python",
+    "code": "def outer(x):\n    def inner(y):\n        return x + y\n    return inner\n",
+    "expected_keys": ["functions"]
+  },
+  {
+    "id": 9,
+    "name": "class_and_functions",
+    "language": "python",
+    "code": "class Dog:\n    def __init__(self, name):\n        self.name = name\n\n    def bark(self):\n        return \"Woof!\"\n\ndef adopt(dog_name):\n    return Dog(dog_name)\n",
+    "expected_keys": ["functions", "classes"]
+  },
+  {
+    "id": 10,
+    "name": "mixed_structures",
+    "language": "javascript",
+    "code": "function greet(name) {\n  return `Hello, ${name}!`;\n}\n\nclass Person {\n  constructor(name, age) {\n    this.name = name;\n    this.age = age;\n  }\n\n  introduce() {\n    return `I'm ${this.name}, ${this.age} years old.`;\n  }\n}\n\nconst double = (x) => x * 2;\n",
+    "expected_keys": ["functions", "classes"]
+  }
+]
