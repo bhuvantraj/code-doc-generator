@@ -64,7 +64,33 @@ st.markdown("""
     .state-GENERATE_DOCUMENTATION { background: #ede9fe; color: #7c3aed; }
     .state-DISPLAY_RESULT { background: #d1fae5; color: #059669; }
     .state-END { background: #d1fae5; color: #047857; border: 2px solid #34d399; }
-    .state-ERROR { background: #fee2e2; color: #dc2626; }
+    .state-ERROR { /* no color */ }
+    /* default badge style: white background, gray border */
+    .state-badge { background: #ffffff; color: #000000; border: 1px solid #cbd5e1; }
+    .state-active { background: #34d399 !important; color: #ffffff !important; }
+        /* removed nav-bar and wrapper classes */
+    .state-row { margin-top: 2rem; margin-bottom: 2.5rem; text-align: center; }
+    /* panel styles */
+    /* columns transparent with minimal horizontal padding */
+    div[data-testid="stColumns"] > div {
+        padding: 1rem 0;        /* removed side padding to close gap */
+        background: transparent;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    /* header typography */
+    .main-header { font-size: 2.6rem; font-weight: 800; }
+    .sub-header { font-size: 1.1rem; }
+    /* button tweaks */
+    .stButton > button { background: #667eea; color: #fff; border: none; }
+    .stButton > button:hover { background: #5a67d8; }
+    /* overall page container */
+    .css-1d391kg { max-width: 250px; margin: auto; }
+    body, .main { background: #f4f6f8; }
+    .stTextArea textarea { font-family: monospace; background: #ffffff; border: 1px solid #a0aec0; color: #2d3748; }
+    /* hide streamlit header (deploy/share button) */
+    header {display: none !important;}
+
 
     .metric-card {
         background: linear-gradient(135deg, #f8fafc, #f1f5f9);
@@ -151,73 +177,52 @@ def on_message(msg):
 
 # ---- Header ---------------------------------------------------------------
 
-st.markdown(
-    '<div class="main-header">Code Documentation Agent</div>',
-    unsafe_allow_html=True,
-)
-st.markdown(
-    '<div class="sub-header">Agentic system powered by Pydantic AI + Groq LLM + Tree-sitter</div>',
-    unsafe_allow_html=True,
-)
+# project title centered with margin
+st.markdown('<div class="main-header" style="text-align:center; margin-bottom:2rem;">Code Documentation Agent</div>', unsafe_allow_html=True)
 
-# ---- Sidebar ---------------------------------------------------------------
-
-with st.sidebar:
-    st.markdown("### Run Controls")
-
-    seed = st.number_input(
-        "Seed (for reproducibility)", min_value=0, max_value=99999, value=42, step=1
-    )
+# second row: seed and language selectors
+c1, c2 = st.columns([1,1])
+with c1:
+    seed = st.number_input("Seed", min_value=0, max_value=99999, value=42, step=1)
+with c2:
     language = st.selectbox("Language", ["python", "javascript", "java"])
 
-    col1, col2 = st.columns(2)
-    with col1:
-        start_btn = st.button("Start", use_container_width=True, type="primary")
-    with col2:
-        reset_btn = st.button("Reset", use_container_width=True)
+st.markdown("<div style='margin-bottom:25px;'></div>", unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.markdown("### Active Agent")
-    st.markdown("**doc_agent**")
-    st.caption("Model: `llama-3.3-70b-versatile`")
-    st.caption("Provider: Groq")
 
-    st.markdown("---")
 
-    # Current state
-    st.markdown("### Current State")
-    state = st.session_state.current_state
-    st.markdown(
-        f'<span class="state-badge state-{state}">{state}</span>',
-        unsafe_allow_html=True,
-    )
 
-    # State flow visualization
-    st.markdown("---")
-    st.markdown("### State Machine")
-    states_list = [
-        "START",
-        "READ_CODE",
-        "PARSE_CODE",
-        "GENERATE_DOCUMENTATION",
-        "DISPLAY_RESULT",
-        "END",
-    ]
-    for i, s in enumerate(states_list):
-        if s == state:
-            st.markdown(f"**> {s}** <--")
-        elif s in [t["to"] for t in st.session_state.state_transitions]:
-            st.markdown(f"  [done] {s}")
-        else:
-            st.markdown(f"  o {s}")
-        if i < len(states_list) - 1:
-            st.markdown("  |")
+
+# state graph below header rows
+current = st.session_state.current_state
+states_list = [
+    "START",
+    "READ_CODE",
+    "PARSE_CODE",
+    "GENERATE_DOCUMENTATION",
+    "DISPLAY_RESULT",
+    "END",
+]
+
+sm_html = ""
+for i, s in enumerate(states_list):
+    active_cls = " state-active" if s == current else ""
+    sm_html += f'<span class="state-badge state-{s}{active_cls}">{s}</span>'
+    if i < len(states_list) - 1:
+        sm_html += '<span class="transition-arrow">&nbsp;→&nbsp;</span>'
+st.markdown(f'<div class="state-row">{sm_html}</div>', unsafe_allow_html=True)
+
+st.markdown("<div style='margin-bottom:35px;'></div>", unsafe_allow_html=True)
 
 # ---- Main Area -------------------------------------------------------------
 
-# Code input
-st.markdown("### Source Code Input")
-default_code = '''def add(a, b):
+# two regions: left for code+buttons, right for results
+# give code column a bit more space
+code_col, results_col = st.columns([1,1])
+
+with code_col:
+    st.markdown("### Source Code Input")
+    default_code = '''def add(a, b):
     """Adds two numbers together."""
     return a + b
 
@@ -234,7 +239,17 @@ class Calculator:
             raise ValueError("Cannot divide by zero")
         return x / y
 '''
-source_code = st.text_area("Paste your code here:", value=default_code, height=250)
+    source_code = st.text_area("Paste your code here:", value=default_code, height=500, width=500)
+
+    # start/reset buttons below code area
+    btn1, btn2 = st.columns(2)
+    with btn1:
+        start_btn = st.button("Start", type="primary")
+    with btn2:
+        reset_btn = st.button("Reset")
+
+# results will appear in results_col
+
 
 # ---- Reset handler ---------------------------------------------------------
 
@@ -293,132 +308,133 @@ if start_btn and not st.session_state.running:
 
 # ---- Results Display -------------------------------------------------------
 
-if st.session_state.result or st.session_state.messages:
+with results_col:
+    if st.session_state.result or st.session_state.messages:
+        # Tabs for organized display
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(
+            [
+                "Documentation",
+                "State Transitions",
+                "Tool Calls",
+                "Agent Messages",
+                "Metrics",
+            ]
+        )
 
-    # Tabs for organized display
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(
-        [
-            "Documentation",
-            "State Transitions",
-            "Tool Calls",
-            "Agent Messages",
-            "Metrics",
-        ]
-    )
+        # -- Tab 1: Documentation -------------------------------------------
+        with tab1:
+            if st.session_state.result and st.session_state.result.get("documentation"):
+                st.markdown(st.session_state.result["documentation"])
+            else:
+                st.info("Run the pipeline to generate documentation.")
 
-    # -- Tab 1: Documentation -----------------------------------------------
-    with tab1:
-        if st.session_state.result and st.session_state.result.get("documentation"):
-            st.markdown(st.session_state.result["documentation"])
-        else:
-            st.info("Run the pipeline to generate documentation.")
-
-    # -- Tab 2: State Transitions -------------------------------------------
-    with tab2:
-        st.markdown("#### State Transition History")
-        if st.session_state.state_transitions:
-            for i, t in enumerate(st.session_state.state_transitions):
-                c1, c2, c3 = st.columns([2, 1, 2])
-                with c1:
-                    st.markdown(
-                        f'<span class="state-badge state-{t["from"]}">'
-                        f'{t["from"]}</span>',
-                        unsafe_allow_html=True,
-                    )
-                with c2:
-                    st.markdown(
-                        f'<span class="transition-arrow">'
-                        f'-- {t["event"]} --></span>',
-                        unsafe_allow_html=True,
-                    )
-                with c3:
-                    st.markdown(
-                        f'<span class="state-badge state-{t["to"]}">'
-                        f'{t["to"]}</span>',
-                        unsafe_allow_html=True,
-                    )
-            st.markdown("---")
-            st.markdown(
-                f"**Total transitions:** {len(st.session_state.state_transitions)}"
-            )
-        else:
-            st.info("No transitions yet. Start the pipeline.")
-
-    # -- Tab 3: Tool Calls --------------------------------------------------
-    with tab3:
-        st.markdown("#### Tool Call Log")
-        if st.session_state.tool_calls:
-            for i, tc in enumerate(st.session_state.tool_calls):
-                with st.expander(f"Tool: {tc['tool']}", expanded=(i == 0)):
-                    st.markdown("**Input:**")
-                    st.json(tc["input"])
-                    st.markdown("**Output:**")
-                    st.json(tc["output"])
-        else:
-            st.info("No tool calls yet. Start the pipeline.")
-
-    # -- Tab 4: Agent Messages ----------------------------------------------
-    with tab4:
-        st.markdown("#### Agent Activity Log")
-        if st.session_state.messages:
-            for msg in st.session_state.messages:
+        # -- Tab 2: State Transitions ---------------------------------------
+        with tab2:
+            st.markdown("#### State Transition History")
+            if st.session_state.state_transitions:
+                for i, t in enumerate(st.session_state.state_transitions):
+                    c1, c2, c3 = st.columns([2, 1, 2])
+                    with c1:
+                        st.markdown(
+                            f'<span class="state-badge state-{t["from"]}">'
+                            f'{t["from"]}</span>',
+                            unsafe_allow_html=True,
+                        )
+                    with c2:
+                        st.markdown(
+                            f'<span class="transition-arrow">'
+                            f'-- {t["event"]} --></span>',
+                            unsafe_allow_html=True,
+                        )
+                    with c3:
+                        st.markdown(
+                            f'<span class="state-badge state-{t["to"]}">'
+                            f'{t["to"]}</span>',
+                            unsafe_allow_html=True,
+                        )
+                st.markdown("---")
                 st.markdown(
-                    f'<div class="msg-box">{msg}</div>',
+                    f"**Total transitions:** {len(st.session_state.state_transitions)}"
+                )
+            else:
+                st.info("No transitions yet. Start the pipeline.")
+
+        # -- Tab 3: Tool Calls ----------------------------------------------
+        with tab3:
+            st.markdown("#### Tool Call Log")
+            if st.session_state.tool_calls:
+                for i, tc in enumerate(st.session_state.tool_calls):
+                    with st.expander(f"Tool: {tc['tool']}", expanded=(i == 0)):
+                        st.markdown("**Input:**")
+                        st.json(tc["input"])
+                        st.markdown("**Output:**")
+                        st.json(tc["output"])
+            else:
+                st.info("No tool calls yet. Start the pipeline.")
+
+        # -- Tab 4: Agent Messages ----------------------------------------------
+        with tab4:
+            st.markdown("#### Agent Activity Log")
+            if st.session_state.messages:
+                for msg in st.session_state.messages:
+                    st.markdown(
+                        f'<div class="msg-box">{msg}</div>',
+                        unsafe_allow_html=True,
+                    )
+            else:
+                st.info("No messages yet.")
+
+        # -- Tab 5: Metrics Dashboard -------------------------------------------
+        with tab5:
+            st.markdown("#### Metrics Dashboard")
+
+            summary = st.session_state.metrics_tracker.get_summary()
+
+            m1, m2, m3 = st.columns(3)
+            with m1:
+                st.markdown(
+                    f'<div class="metric-card">'
+                    f'<div class="metric-value">{summary["avg_generation_time"]:.2f}s</div>'
+                    f'<div class="metric-label">Avg Generation Time</div>'
+                    f"</div>",
                     unsafe_allow_html=True,
                 )
-        else:
-            st.info("No messages yet.")
+            with m2:
+                st.markdown(
+                    f'<div class="metric-card">'
+                    f'<div class="metric-value">{summary["total_tool_calls"]}</div>'
+                    f'<div class="metric-label">Total Tool Calls</div>'
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
+            with m3:
+                st.markdown(
+                    f'<div class="metric-card">'
+                    f'<div class="metric-value">{summary["success_rate"]:.0f}%</div>'
+                    f'<div class="metric-label">Success Rate</div>'
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
 
-    # -- Tab 5: Metrics Dashboard -------------------------------------------
-    with tab5:
-        st.markdown("#### Metrics Dashboard")
+            st.markdown("")
 
-        summary = st.session_state.metrics_tracker.get_summary()
-
-        m1, m2, m3 = st.columns(3)
-        with m1:
-            st.markdown(
-                f'<div class="metric-card">'
-                f'<div class="metric-value">{summary["avg_generation_time"]:.2f}s</div>'
-                f'<div class="metric-label">Avg Generation Time</div>'
-                f"</div>",
-                unsafe_allow_html=True,
-            )
-        with m2:
-            st.markdown(
-                f'<div class="metric-card">'
-                f'<div class="metric-value">{summary["total_tool_calls"]}</div>'
-                f'<div class="metric-label">Total Tool Calls</div>'
-                f"</div>",
-                unsafe_allow_html=True,
-            )
-        with m3:
-            st.markdown(
-                f'<div class="metric-card">'
-                f'<div class="metric-value">{summary["success_rate"]:.0f}%</div>'
-                f'<div class="metric-label">Success Rate</div>'
-                f"</div>",
-                unsafe_allow_html=True,
-            )
-
-        st.markdown("")
-
-        # Run history table
-        run_history = st.session_state.metrics_tracker.get_run_history()
-        if run_history:
-            st.markdown("#### Run History")
-            st.dataframe(
-                run_history,
-                column_config={
-                    "run_id": "Run ID",
-                    "generation_time": st.column_config.NumberColumn(
-                        "Gen Time (s)", format="%.4f"
-                    ),
-                    "tool_call_count": "Tool Calls",
-                    "success": st.column_config.CheckboxColumn("Success"),
-                },
-                use_container_width=True,
-            )
+            # Run history table
+            run_history = st.session_state.metrics_tracker.get_run_history()
+            if run_history:
+                st.markdown("#### Run History")
+                st.dataframe(
+                    run_history,
+                    column_config={
+                        "run_id": "Run ID",
+                        "generation_time": st.column_config.NumberColumn(
+                            "Gen Time (s)", format="%.4f"
+                        ),
+                        "tool_call_count": "Tool Calls",
+                        "success": st.column_config.CheckboxColumn("Success"),
+                    },
+                    use_container_width=True,
+                )
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ---- Footer ----------------------------------------------------------------
 
