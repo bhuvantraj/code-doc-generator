@@ -67,5 +67,13 @@ Streamlit UI Display
 # Install dependencies
 pip install -r requirements.txt
 
+#requirements.txt
+streamlit
+groq
+tree-sitter
+tree-sitter-languages
+python-dotenv
+pydantic
+
 # Run application
 streamlit run ui/app.py
